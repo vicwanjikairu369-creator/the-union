@@ -61,6 +61,7 @@ export default function LevelPlay() {
 
   useEffect(() => {
     fetchScene();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -74,6 +75,7 @@ export default function LevelPlay() {
     }
     const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, loading, showCounselor, gameOver, currentScene, error]);
 
   function handleChoice(delta: number) {
@@ -217,33 +219,38 @@ export default function LevelPlay() {
         />
       )}
 
-      {/* TOP HUD - Glassmorphism */}
-      <div className="absolute top-6 left-6 right-6 flex justify-between items-start z-30 pointer-events-none">
+      {/* TOP HUD - Konami Style */}
+      <div className="absolute top-8 left-8 right-8 flex justify-between items-start z-30 pointer-events-none">
         
         {/* Stability Meter */}
-        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 w-72 pointer-events-auto shadow-2xl">
-          <div className="text-white/80 text-xs uppercase tracking-[0.2em] mb-3 flex justify-between font-medium">
-            <span>Emotional Stability</span>
-            <span className="font-mono text-white">{stability}%</span>
+        <div className="bg-black/30 backdrop-blur-2xl border border-white/10 rounded-xl p-4 w-72 pointer-events-auto shadow-[0_0_30px_rgba(0,0,0,0.8)] relative overflow-hidden">
+          {/* subtle scanline effect */}
+          <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.2)_50%)] bg-[length:100%_4px] pointer-events-none opacity-20" />
+          
+          <div className="flex justify-between items-end mb-2">
+            <span className="text-white/70 text-[10px] uppercase tracking-[0.3em] font-bold">Vital: Emotional Stability</span>
+            <span className={`font-mono text-xl ${stability > 50 ? 'text-emerald-400' : stability > 25 ? 'text-amber-400' : 'text-red-500 animate-pulse'}`}>
+              {stability}%
+            </span>
           </div>
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
             <motion.div
-              className="h-full rounded-full"
-              style={{ background: stability > 50 ? '#10b981' : stability > 25 ? '#f59e0b' : '#ef4444' }}
+              className={`h-full ${stability > 50 ? 'bg-emerald-500' : stability > 25 ? 'bg-amber-500' : 'bg-red-600'}`}
               animate={{ width: `${stability}%` }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
+              transition={{ duration: 0.3 }}
             />
           </div>
         </div>
 
         {/* Timer */}
-        <div className={`relative w-20 h-20 bg-black/40 backdrop-blur-xl border rounded-full flex items-center justify-center shadow-2xl pointer-events-auto transition-colors duration-500 ${timeLeft <= 5 ? 'border-red-500/50 text-red-500 shadow-red-900/20' : 'border-white/10 text-white'}`}>
-          <span className="font-mono text-2xl font-light">{timeLeft}</span>
+        <div className={`relative w-24 h-24 bg-black/40 backdrop-blur-2xl border-2 rounded-full flex flex-col items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.8)] pointer-events-auto transition-all duration-300 ${timeLeft <= 5 ? 'border-red-500 text-red-500 shadow-red-900/50 scale-110' : 'border-white/20 text-white'}`}>
+          <span className="font-mono text-3xl font-light">{timeLeft}</span>
+          <span className="text-[8px] uppercase tracking-widest text-white/50 mt-1">Seconds</span>
         </div>
       </div>
 
       {/* CENTER DIALOGUE - Cinematic Subtitles */}
-      <div className="flex-1 flex items-center justify-center px-6 z-20 pointer-events-none relative">
+      <div className="flex-1 flex items-center justify-center px-6 z-20 pointer-events-none relative mt-20">
         <AnimatePresence mode="wait">
           <motion.div
             key={sceneCount}
