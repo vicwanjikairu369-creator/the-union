@@ -14,19 +14,18 @@ export default function LevelPlay() {
   const [timeLeft, setTimeLeft] = useState(25);
   const [currentScene, setCurrentScene] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showCounselor, setShowCounselor] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  
+  const [sceneCount, setSceneCount] = useState(0);
   const [rewards, setRewards] = useState<{strength: number, iq: number} | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  
-  // Track how many scenes played in this level
-  const [sceneCount, setSceneCount] = useState(0);
 
-  // 1. Fetch a new scene from the AI
   async function fetchScene() {
     setLoading(true);
+    setError(null);
     try {
-      // Get player's partner data to feed to the AI
       const { data: { user } } = await supabase.auth.getUser();
       const { data: partnerProfile } = await supabase
         .from("partner_profiles")
@@ -45,25 +44,28 @@ export default function LevelPlay() {
       });
       
       const data = await res.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
       setCurrentScene(data);
-      setTimeLeft(25); // Reset timer
+      setTimeLeft(25);
       setLoading(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.message || "Failed to connect to the AI.");
       setLoading(false);
     }
   }
 
-  // Initial load
   useEffect(() => {
     fetchScene();
   }, []);
 
-  // Timer
   useEffect(() => {
-    if (loading || showCounselor || gameOver || !currentScene) return;
+    if (loading || showCounselor || gameOver || !currentScene || error) return;
     if (timeLeft <= 0) {
-      // Time ran out = penalty and next scene
       const newStability = Math.max(0, stability - 20);
       setStability(newStability);
       if (newStability <= 0) setGameOver(true);
@@ -72,7 +74,7 @@ export default function LevelPlay() {
     }
     const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(timer);
-  }, [timeLeft, loading, showCounselor, gameOver, currentScene]);
+  }, [timeLeft, loading, showCounselor, gameOver, currentScene, error]);
 
   function handleChoice(delta: number) {
     const newStability = Math.max(0, Math.min(100, stability + delta));
@@ -85,12 +87,11 @@ export default function LevelPlay() {
     handleNextScene();
   }
 
-    async function handleNextScene() {
+  async function handleNextScene() {
     if (sceneCount >= 2) {
       setShowCounselor(true);
       setIsSaving(true);
       
-      // Save progress to database
       try {
         const res = await fetch("/api/complete", {
           method: "POST",
@@ -113,6 +114,27 @@ export default function LevelPlay() {
       setSceneCount((c) => c + 1);
       fetchScene();
     }
+  }
+
+  const enable3D = process.env.NEXT_PUBLIC_ENABLE_3D === "true";
+
+  if (error) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 px-6">
+        <div className="text-center max-w-lg border border-red-500/30 bg-red-950/20 p-8 rounded-3xl">
+          <h1 className="text-3xl font-serif text-red-400 mb-4">System Error</h1>
+          <p className="text-white/80 mb-8">{error}</p>
+          <div className="flex gap-4 justify-center">
+            <button onClick={() => fetchScene()} className="bg-white text-black px-6 py-3 rounded-full font-medium hover:bg-white/90">
+              Try Again
+            </button>
+            <button onClick={() => router.push('/game')} className="border border-white/20 text-white px-6 py-3 rounded-full font-medium hover:bg-white/10">
+              Back to Menu
+            </button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (loading) {
@@ -138,7 +160,7 @@ export default function LevelPlay() {
     );
   }
 
-    if (showCounselor) {
+  if (showCounselor) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-black px-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/5 border border-white/10 rounded-3xl p-8 max-w-2xl w-full">
@@ -174,9 +196,6 @@ export default function LevelPlay() {
       </main>
     );
   }
-
-    // Check if we are allowed to run 3D (to protect your Chuwi)
-  const enable3D = process.env.NEXT_PUBLIC_ENABLE_3D === "true";
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black flex flex-col font-sans">
@@ -264,3 +283,4 @@ export default function LevelPlay() {
       </div>
     </div>
   );
+}
