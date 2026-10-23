@@ -2,7 +2,6 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Environment, ContactShadows, Sparkles, Float } from "@react-three/drei";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
-import { motion } from "framer-motion";
 
 export default function SceneCanvas({ stability }: { stability: number }) {
   // Dynamic Colors based on Stability

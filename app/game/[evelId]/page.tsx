@@ -3,7 +3,12 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-import SceneCanvas from "@/components/SceneCanvas";
+import dynamic from "next/dynamic";
+
+const SceneCanvas = dynamic(() => import("@/components/SceneCanvas"), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0 bg-black flex items-center justify-center text-white/50 font-mono text-sm tracking-widest">INITIALIZING 3D ENGINE...</div>
+});
 
 export default function LevelPlay() {
   const params = useParams();
