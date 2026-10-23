@@ -18,13 +18,16 @@ export async function rememberMoment(
   const index = pinecone.index('union-memories');
   const id = `mem_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-  await index.namespace(playerId).upsert([
-    {
-      id,
-      values: embedding.data[0].embedding,
-      metadata: { text: moment, weight: emotionalWeight, type: memoryType },
-    },
-  ]);
+  // FIX: Wrap the array in a "records" object
+  await index.namespace(playerId).upsert({
+    records: [
+      {
+        id,
+        values: embedding.data[0].embedding,
+        metadata: { text: moment, weight: emotionalWeight, type: memoryType },
+      },
+    ],
+  });
 
   return id;
 }

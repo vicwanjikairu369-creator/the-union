@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 
 export default async function Verify({ params }: { params: { certId: string } }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('profiles')
     .select('username, emotional_iq, certification_id, is_certified')

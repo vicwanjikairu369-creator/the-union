@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,9 +31,8 @@ export async function POST(req: Request) {
   }
 
   // 4. Find the player with the closest Emotional IQ
-  const sorted = candidates
-    .map(c => ({ ...c, diff: Math.abs(c.emotional_iq - me.emotional_iq) }))
-    .sort((a, b) => a.diff - b.diff);
+  const sorted = candidates.map((c: any) => ({ ...c, diff: Math.abs(c.emotional_iq - me.emotional_iq) }))
+  .sort((a: any, b: any) => a.diff - b.diff);
 
   const match = sorted[0];
 
