@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: ui-serif, Georgia, serif;
+}
+
+html, body {
+  background: #000;
+  color: #fff;
+}

@@ -1,0 +1,64 @@
+"use client";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+
+export default function Soulmate() {
+  const [match, setMatch] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  async function findMatch() {
+    setLoading(true);
+    setMsg("");
+    const res = await fetch("/api/soulmate", { method: "POST" });
+    const data = await res.json();
+    if (data.match) setMatch(data.match);
+    else setMsg(data.message || data.error || "No match yet.");
+    setLoading(false);
+  }
+
+  return (
+    <main className="min-h-screen flex items-center justify-center px-6 bg-black text-center">
+      <div className="max-w-lg w-full">
+        <h1 className="text-5xl font-serif mb-6 text-white">Soulmate</h1>
+        
+        {!match && (
+          <>
+            <p className="text-white/70 mb-8">
+              Once you have conquered your levels, we search the world for the player whose emotional soul moves closest to yours.
+            </p>
+            <button
+              onClick={findMatch}
+              disabled={loading}
+              className="bg-white text-black px-8 py-4 rounded-full font-medium disabled:opacity-30 hover:bg-white/90 transition"
+            >
+              {loading ? "Searching the world..." : "Find my match"}
+            </button>
+            {msg && <p className="mt-6 text-red-400">{msg}</p>}
+          </>
+        )}
+
+        {match && (
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <div className="text-emerald-400 text-sm uppercase tracking-widest mb-2 font-bold">Perfect Match Found</div>
+            <div className="text-4xl font-serif text-white mt-2">{match.username}</div>
+            <div className="flex justify-center gap-6 mt-8">
+              <div>
+                <div className="text-2xl font-mono text-white">{match.emotional_iq}</div>
+                <div className="text-xs text-white/50 uppercase">Their EIQ</div>
+              </div>
+              <div>
+                <div className="text-2xl font-mono text-white">{match.total_levels_conquered}</div>
+                <div className="text-xs text-white/50 uppercase">Levels Won</div>
+              </div>
+            </div>
+            <Link href="/game" className="inline-block mt-10 text-white/50 hover:text-white underline text-sm">
+              Return to game
+            </Link>
+          </motion.div>
+        )}
+      </div>
+    </main>
+  );
+}
