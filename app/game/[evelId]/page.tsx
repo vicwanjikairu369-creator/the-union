@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import SceneCanvas from "@/components/SceneCanvas";
 
 export default function LevelPlay() {
   const params = useParams();
@@ -174,46 +175,75 @@ export default function LevelPlay() {
     );
   }
 
+    // Check if we are allowed to run 3D (to protect your Chuwi)
+  const enable3D = process.env.NEXT_PUBLIC_ENABLE_3D === "true";
+
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-slate-950 flex flex-col">
-      <div className="absolute top-6 left-6 right-6 flex justify-between items-start z-30">
-        <div className="bg-black/60 backdrop-blur rounded-2xl p-4 w-64 border border-white/10">
-          <div className="text-white text-xs uppercase tracking-widest mb-2 flex justify-between">
+    <div className="relative h-screen w-screen overflow-hidden bg-black flex flex-col font-sans">
+      
+      {/* 3D GRAPHICS LAYER (Or Cinematic Fallback) */}
+      {enable3D ? (
+        <SceneCanvas stability={stability} />
+      ) : (
+        <motion.div 
+          className="absolute inset-0 z-0 opacity-50"
+          animate={{
+            background: stability > 50 
+              ? "radial-gradient(circle at 50% 50%, #1e1b4b 0%, #000000 100%)" 
+              : stability > 25
+              ? "radial-gradient(circle at 50% 50%, #4c1d95 0%, #000000 100%)"
+              : "radial-gradient(circle at 50% 50%, #7f1d1d 0%, #000000 100%)"
+          }}
+          transition={{ duration: 2 }}
+        />
+      )}
+
+      {/* TOP HUD - Glassmorphism */}
+      <div className="absolute top-6 left-6 right-6 flex justify-between items-start z-30 pointer-events-none">
+        
+        {/* Stability Meter */}
+        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-5 w-72 pointer-events-auto shadow-2xl">
+          <div className="text-white/80 text-xs uppercase tracking-[0.2em] mb-3 flex justify-between font-medium">
             <span>Emotional Stability</span>
-            <span className="font-mono">{stability}%</span>
+            <span className="font-mono text-white">{stability}%</span>
           </div>
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
             <motion.div
               className="h-full rounded-full"
-              style={{ background: stability > 50 ? '#22c55e' : stability > 25 ? '#eab308' : '#ef4444' }}
+              style={{ background: stability > 50 ? '#10b981' : stability > 25 ? '#f59e0b' : '#ef4444' }}
               animate={{ width: `${stability}%` }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             />
           </div>
         </div>
-        <div className={`relative w-16 h-16 bg-black/60 backdrop-blur border rounded-full flex items-center justify-center ${timeLeft <= 5 ? 'border-red-500 text-red-500' : 'border-white/20 text-white'}`}>
-          <span className="font-mono text-xl font-bold">{timeLeft}</span>
+
+        {/* Timer */}
+        <div className={`relative w-20 h-20 bg-black/40 backdrop-blur-xl border rounded-full flex items-center justify-center shadow-2xl pointer-events-auto transition-colors duration-500 ${timeLeft <= 5 ? 'border-red-500/50 text-red-500 shadow-red-900/20' : 'border-white/10 text-white'}`}>
+          <span className="font-mono text-2xl font-light">{timeLeft}</span>
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-6">
+      {/* CENTER DIALOGUE - Cinematic Subtitles */}
+      <div className="flex-1 flex items-center justify-center px-6 z-20 pointer-events-none relative">
         <AnimatePresence mode="wait">
           <motion.div
             key={sceneCount}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: 15, filter: "blur(5px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -15, filter: "blur(5px)" }}
+            transition={{ duration: 0.6 }}
             className="max-w-3xl text-center"
           >
-            <p className="text-white/50 text-sm uppercase tracking-widest mb-4">Partner</p>
-            <p className="text-white text-3xl md:text-4xl font-light italic leading-tight">
+            <p className="text-white/40 text-xs tracking-[0.3em] uppercase mb-6 font-semibold drop-shadow-md">Partner</p>
+            <p className="text-white text-3xl md:text-5xl font-serif italic leading-tight drop-shadow-2xl text-shadow">
               "{currentScene?.partnerDialogue}"
             </p>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      <div className="p-8 pb-12 w-full max-w-5xl mx-auto">
+      {/* BOTTOM CHOICES - Sleek Glassmorphism Buttons */}
+      <div className="p-8 pb-12 w-full max-w-5xl mx-auto z-30">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {currentScene?.choices?.map((choice: any, i: number) => (
             <motion.button
@@ -222,16 +252,15 @@ export default function LevelPlay() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               onClick={() => handleChoice(choice.stability_delta)}
-              className="bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/30 rounded-2xl p-5 text-left transition group"
+              className="group relative overflow-hidden bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/30 rounded-2xl p-5 text-left transition-all duration-300 hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
             >
-              <div className="text-xs uppercase tracking-widest text-white/40 mb-2 group-hover:text-white/80 transition">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-2 group-hover:text-white/70 transition-colors">
                 {choice.emotion_tag}
               </div>
-              <div className="text-white/90 text-lg">{choice.text}</div>
+              <div className="text-white/90 text-lg font-light leading-snug">{choice.text}</div>
             </motion.button>
           ))}
         </div>
       </div>
     </div>
   );
-}
